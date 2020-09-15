@@ -1,0 +1,123 @@
+________________________________________________________________
+website: https://nmap.org/
+install guide: https://nmap.org/book/inst-linux.html#inst-rpm
+中文手册: http://www.nmap.com.cn/doc/manual.shtm
+
+Install from RPM:
+rpm -vhU https://nmap.org/dist/nmap-7.80-1.x86_64.rpm
+Removing RPM packages:
+rpm -e nmap
+________________________________________________________________
+案例:
+-n (不用域名解析) 告诉Nmap永不对它发现的活动IP地址进行反向域名解析。 DNS一般比较慢，这可以让扫描速度更快。
+-oA <basename> (输出至所有格式) ，-oA <basename>选项 可将扫描结果以标准格式、XML格式和Grep格式一次性输出。
+    分别存放在 <basename>.nmap，<basename>.xml和 <basename>.gnmap文件中。
+    也可以在文件名前 指定目录名，如在UNIX中，使用~/nmaplogs/foocorp/
+-A (激烈扫描模式选项) 这个选项启用了操作系统检测(-O) 和版本扫描(-sV)，以后会增加更多的功能。
+    目的是启用一个全面的扫描选项集合，不需要用户记忆大量的 选项。
+    这个选项仅仅启用功能，不包含用于可能所需要的 时间选项(如-T4)或细节选项(-v)。
+-sS (TCP SYN扫描)，SYN扫描作为默认的也是最受欢迎的扫描选项，是有充分理由的。
+    它执行得很快，在一个没有入侵防火墙的快速网络上，每秒钟可以扫描数千个 端口。
+    SYN扫描相对来说不张扬，不易被注意到，因为它从来不完成TCP连接。
+    SYN扫描，只完成三次握手前两次，很少有系统记入日志，默认使用，需要root(admin)权限
+-sA 高级的扫描方式，用来穿过防火墙的规则集
+-sP Ping扫描，默认使用，只有能Ping得通才会继续扫描
+-P0 Treat all hosts as online -- skip host discovery
+    扫描之前不需要Ping，用于绕过防火墙禁Ping功能。
+    默认情况下，Nmap只对正在运行的主机进行高强度的探测如端口扫描，版本探测，或者操作系统探测。
+    用-P0禁止 主机发现会使Nmap对每一个指定的目标IP地址进行所要求的扫描。
+    所以如果在命令行指定一个B类目标地址空间(/16)， 所有 65,536 个IP地址都会被扫描。
+    -P0的第二个字符是数字0而不是字母O。和列表扫描一样，跳过正常的主机发现，但不是打印一个目标列表，而是继续执行所要求的功能，就好像每个IP都是活动的。
+
+-p，-p参数，如果不指定要扫描的端口，Nmap默认扫描从1到1024，再加上nmap-services列出的端口，
+    nmap-services是一个包含大约2200个著名的服务的数据库，Nmap通过查询该数据库可以报告那些端口可能对应于什么服务器，但不一定正确。
+    所以正确扫描一个机器开放端口的方法是: -p 1-65535
+
+nmap -T3 -n 10.255.38.31 -oA scan38
+
+nmap -T3 -n -sS 10.255.38.31
+
+nmap -T3 -n -A 10.255.38.31     #对具体IP进行-A全面扫描
+
+sudo nmap -T3 -n -sS 10.255.38.180-200
+
+sudo nmap -T3 -n -sS -P0 10.255.38.180-200      #穿越防火墙(禁止ping)扫描
+
+sudo nmap -T3 -n -sS -p 3306 10.255.38.2-254    #指定扫描3306端口
+
+nmap --script=mysql-brute 10.255.38.2-254 -p 3306   #对目标进行mysql默认密码暴力破解
+
+nmap --script brute  10.255.38.31      #对目标服务进行暴力破解,可对数据库、smb、snmp等进行简单密码的暴力猜解
+
+sudo nmap -T3 -n -sV -P0 10.255.20.19  #-sV 利用特征匹配扫描,更准确
+
+实例：
+暴力破解
+nmap --script=mysql-brute 10.255.38.31 -p 3306
+
+nmap --script=mysql-brute,mysql-empty-password,mysql-users,mysql-info 192.168.31.107 -p 3306
+
+PORT     STATE SERVICE
+3306/tcp open  mysql
+| mysql-brute:
+|   Accounts:
+|     root:root - Valid credentials
+|     test:test - Valid credentials
+|     user:user - Valid credentials
+|     web:web - Valid credentials
+|     netadmin:netadmin - Valid credentials
+|     sysadmin:sysadmin - Valid credentials
+|     administrator:administrator - Valid credentials
+|     webadmin:webadmin - Valid credentials
+|     admin:admin - Valid credentials
+|     guest:guest - Valid credentials
+|_  Statistics: Performed 15 guesses in 1 seconds, average tps: 15.0
+
+空密码校验
+#nmap -p3306 --script=mysql-empty-password.nse 10.255.38.31
+PORT     STATE SERVICE
+3306/tcp open  mysql
+| mysql-empty-password:
+|   anonymous account has empty password
+|_  root account has empty password
+
+对目标服务进行暴力破解,可对数据库、smb、snmp等进行简单密码的暴力猜解
+#nmap --script brute  10.255.38.31
+3306/tcp open     mysql
+| mysql-brute:
+|   Accounts:
+|     root:root - Valid credentials
+|     netadmin:netadmin - Valid credentials
+|     guest:guest - Valid credentials
+|     user:user - Valid credentials
+|     web:web - Valid credentials
+|     sysadmin:sysadmin - Valid credentials
+|     administrator:administrator - Valid credentials
+|     webadmin:webadmin - Valid credentials
+|     admin:admin - Valid credentials
+|     test:test - Valid credentials
+|_  Statistics: Performed 15 guesses in 1 seconds, average tps: 15.0
+| mysql-enum:
+|   Valid usernames:
+|     root:<empty> - Valid credentials
+|     netadmin:<empty> - Valid credentials
+|     guest:<empty> - Valid credentials
+|     user:<empty> - Valid credentials
+|     web:<empty> - Valid credentials
+|     sysadmin:<empty> - Valid credentials
+|     administrator:<empty> - Valid credentials
+|     webadmin:<empty> - Valid credentials
+|     admin:<empty> - Valid credentials
+|     test:<empty> - Valid credentials
+|_  Statistics: Performed 10 guesses in 1 seconds, average tps: 10.0
+________________________________________________________________
+安装rpm包: rpm -ivh ***.rpm i表示安装，v表示显示安装过程，h表示显示进度
+升级rpm包: rpm -Uvh ***.rpm
+查询rpm包: rpm -q PACKAGE_NAME
+删除rpm包:
+rpm -e PACKAGE_NAME
+rpm -e –nodeps PACKAGE_NAME    #不考虑依赖包
+rpm -e –allmatches PACKAGE_NAME    #删除所有跟PACKAGE_NAME匹配的所有版本的包
+________________________________________________________________
+
+/usr/local/Cellar/nmap/7.80_1/share/nmap/scripts

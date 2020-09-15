@@ -1,0 +1,8 @@
+在当前目录./下, 查找包含 xxx 的文件
+grep -R --include="*.*" 'xxx' ./
+
+grep -R --include="*.*" 'mysql' ./
+
+grep -R --include="*.*" '\-p' ./
+
+grep -R --include="*.*" 'password' ./

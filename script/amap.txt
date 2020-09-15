@@ -1,0 +1,75 @@
+www.thc.org/thc-amap
+https://packetstormsecurity.com/files/download/40441/amap-5.2.tar.gz
+
+amap -q 10.255.20.19 1-65535
+
+输出:
+amap v5.4 (www.thc.org/thc-amap) started at 2020-08-23 15:38:12 - APPLICATION MAPPING mode
+
+Protocol on 10.255.20.19:139/tcp matches netbios-session
+Protocol on 10.255.20.19:1032/tcp matches http
+Protocol on 10.255.20.19:3309/tcp matches mysql
+this connect
+Warning: Could not connect (timeout 5, retries 3) to 10.255.20.19:445/tcp, disabling port
+Protocol on 10.255.20.19:135/tcp matches netbios-session
+Protocol on 10.255.20.19:1029/tcp matches netbios-session
+Protocol on 10.255.20.19:1033/tcp matches netbios-session
+Protocol on 10.255.20.19:49664/tcp matches netbios-session
+Protocol on 10.255.20.19:49665/tcp matches netbios-session
+Protocol on 10.255.20.19:49666/tcp matches netbios-session
+Protocol on 10.255.20.19:49667/tcp matches netbios-session
+Protocol on 10.255.20.19:49668/tcp matches netbios-session
+Protocol on 10.255.20.19:49669/tcp matches netbios-session
+this connect
+amap v5.4 finished at 2020-08-23 15:39:26
+
+优化命令：
+
+amap -q -t 1 -T 1 -C 0 -c32 -H 10.255.20.19 1-65535 |grep Protocol
+输出:
+Protocol on 10.255.20.19:139/tcp matches netbios-session
+Protocol on 10.255.20.19:1032/tcp matches http
+Protocol on 10.255.20.19:3309/tcp matches mysql
+Protocol on 10.255.20.19:135/tcp matches netbios-session
+Protocol on 10.255.20.19:1029/tcp matches netbios-session
+Protocol on 10.255.20.19:1033/tcp matches netbios-session
+Protocol on 10.255.20.19:49664/tcp matches netbios-session
+Protocol on 10.255.20.19:49665/tcp matches netbios-session
+Protocol on 10.255.20.19:49666/tcp matches netbios-session
+Protocol on 10.255.20.19:49667/tcp matches netbios-session
+Protocol on 10.255.20.19:49668/tcp matches netbios-session
+Protocol on 10.255.20.19:49669/tcp matches netbios-session
+
+扫描准确度优化
+1. -u 对端口进行udp扫描，默认进行tcp扫描
+2. -6 使用IPv6，默认使用IPv4
+
+扫描参数调优
+1. -R   不识别RPC服务。默认识别RPC服务。（识别RPC服务时，会多次创建与目标机器端口的连接来识别RPC服务的类型和版本，耗费时间且易被发现）
+2. -C n 设置超时重试次数
+3. -c n 设置并发数量，默认32,最大256
+4. -T n 设置完成TCP三次握手连接的超时时间，默认为5
+5. -t n 设置等待响应的时间，默认为5
+6. -H   设置不发送有害的服务标识数据包，可通过appdefs.trig查看如何标记一个有害的服务标识包
+
+快速扫描目标全部端口（可在4分钟内完成扫描，且在内网中不影响准确率）
+# 打印全部端口开放情况
+amap -T 1 -t 1 -C 0 -c 256 <ip> 1-65535
+# 只打印开放端口情况
+amap -T 1 -t 1 -C 0 -c 256 <ip> 1-65535 | grep Protocol
+# 只查看开放的端口及服务信息
+amap -T 1 -t 1 -C 0 -c 256 <ip> 1-65535 | grep Protocol | awk '{print $3,$5}'`
+# 针对UDP扫描
+amap -u -t 1 -C 0 -c 256 <ip> 1-65535 | grep Protocol | awk '{print $3, $5}'
+# 获取开放的端口
+amap -1 -q -t 1 -C 0 -c 256 10.129.5.105 -u 137 | grep Protocol | awk '{print $3}' | awk -F':' '{print $2}' | awk -F'/' '{print $1}'
+# 获取开放的服务
+amap -1 -q -t 1 -C 0 -c 256 10.129.5.105 -u 137 | grep Protocol | awk '{print $5}'
+
+
+
+amap -B -1 -b -q -t 1 -T 1 -C 0 -c 32 -H 10.255.23.115 1-65535 |grep Banner
+BANNER mode
+
+
+
